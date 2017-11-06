@@ -39,6 +39,9 @@ target_link_libraries(laserMapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV
 add_executable(transformMaintenance src/transformMaintenance.cpp)
 target_link_libraries(transformMaintenance ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
+add_executable(transformOdometry src/transformOdometry.cpp)
+target_link_libraries(transformOdometry ${catkin_LIBRARIES})
+
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   # TODO: Download test data
