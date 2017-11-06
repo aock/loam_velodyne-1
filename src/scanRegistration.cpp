@@ -38,6 +38,7 @@
 #include <nav_msgs/Odometry.h>
 #include <opencv/cv.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
@@ -45,12 +46,15 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
 
 using std::sin;
 using std::cos;
 using std::atan2;
+
+boost::shared_ptr<tf::TransformListener> m_tf_listener_ptr;
 
 const double scanPeriod = 0.1;
 
@@ -208,6 +212,33 @@ void AccumulateIMUShift()
   }
 }
 
+void transformCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg,
+  sensor_msgs::PointCloud2& out_cloud)
+{
+    std::string target_frame_id = "base_footprint";
+
+    sensor_msgs::PointCloud2 cloud = *laserCloudMsg;
+
+    out_cloud.header = cloud.header;
+    out_cloud.header.frame_id = target_frame_id;
+
+    if( target_frame_id != cloud.header.frame_id )
+    {
+        if(m_tf_listener_ptr->waitForTransform(target_frame_id,
+                 laserCloudMsg->header.frame_id,
+                 ros::Time(0),
+                 ros::Duration(4.0)) )
+        {
+            ROS_INFO("TRANSFORM FROM %s to %s", laserCloudMsg->header.frame_id.c_str(), target_frame_id.c_str() );
+            pcl_ros::transformPointCloud(target_frame_id, cloud, out_cloud, *m_tf_listener_ptr);
+        }else{
+            out_cloud = cloud;
+        }
+    }else{
+        out_cloud = cloud;
+    }
+}
+
 void laserCloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg)
 {
   if (!systemInited) {
@@ -221,6 +252,9 @@ void laserCloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg)
   std::vector<int> scanStartInd(N_SCANS, 0);
   std::vector<int> scanEndInd(N_SCANS, 0);
   
+  // sensor_msgs::PointCloud2 cloud;
+  // transformCloud(laserCloudMsg, cloud);
+
   double timeScanCur = laserCloudMsg->header.stamp.toSec();
   pcl::PointCloud<pcl::PointXYZ> laserCloudIn;
   pcl::fromROSMsg(*laserCloudMsg, laserCloudIn);
@@ -664,6 +698,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "scanRegistration");
   ros::NodeHandle nh;
 
+
+
   ros::Subscriber subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2> 
                                   ("/velodyne_points", 2, laserCloudHandler);
 
@@ -685,6 +721,8 @@ int main(int argc, char** argv)
                                            ("/laser_cloud_less_flat", 2);
 
   pubImuTrans = nh.advertise<sensor_msgs::PointCloud2> ("/imu_trans", 5);
+
+  m_tf_listener_ptr =boost::shared_ptr<tf::TransformListener>(new tf::TransformListener);
 
   ros::spin();
 

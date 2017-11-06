@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="loam_velodyne" type="transformOdometry" name="transformOdometry" output="screen">
+      <remap from="/velodyne_points" to="/velodyne_points" />
+      <param name="velodyne_roll" value="1.4387"/>
+      <param name="velodyne_pitch" value="0"/>
+      <param name="velodyne_yaw" value="1.5707"/>
+  </node>
+</launch>
