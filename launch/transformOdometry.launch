@@ -2,7 +2,13 @@
   <node pkg="loam_velodyne" type="transformOdometry" name="transformOdometry" output="screen">
       <remap from="/velodyne_points" to="/velodyne_points" />
       <param name="velodyne_roll" value="1.4387"/>
-      <param name="velodyne_pitch" value="0"/>
+      <param name="velodyne_pitch" value="-0.01"/>
       <param name="velodyne_yaw" value="1.5707"/>
+      <param name="velodyne_x" value="0.264"/>
+      <param name="velodyne_y" value="0"/>
+      <param name="velodyne_z" value="0"/>
+      <param name="odom_corr_roll" value="0"/>
+      <param name="odom_corr_pitch" value="-1.5707"/>
+      <param name="odom_corr_yaw" value="0"/>
   </node>
 </launch>
